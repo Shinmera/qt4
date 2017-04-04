@@ -460,9 +460,21 @@ void *QGLContextPrivate::tryFormat(const QGLFormat &format)
         attribs[cnt++] = NSOpenGLPFASamples;
         attribs[cnt++] = def(format.samples(), 4);
     }
-
     if (devType == QInternal::Pbuffer)
         attribs[cnt++] = NSOpenGLPFAPixelBuffer;
+    
+    // QT-LIBS FIX: Select proper context
+    attribs[cnt++] = NSOpenGLPFAOpenGLProfile;
+    if (format.majorVersion() >= 4) {
+      attribs[cnt++] = NSOpenGLProfileVersion4_1Core;
+    } else if (format.majorVersion() >= 3 && format.minorVersion() >= 2) {
+      attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
+    } else if (format.profile() == CoreProfile){
+      attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
+    } else {
+      attribs[cnt++] = NSOpenGLProfileVersionLegacy;
+    }
+    // QT-LIBS FIX
 
     attribs[cnt] = 0;
     Q_ASSERT(cnt < Max);
@@ -504,6 +516,7 @@ void *QGLContext::chooseMacVisual(GDHandle /* handle */)
     }
     if (!fmt)
         qWarning("QGLContext::chooseMacVisual: Unable to choose a pixel format");
+
     return fmt;
 }
 
