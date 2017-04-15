@@ -469,7 +469,7 @@ void *QGLContextPrivate::tryFormat(const QGLFormat &format)
       attribs[cnt++] = NSOpenGLProfileVersion4_1Core;
     } else if (format.majorVersion() >= 3 && format.minorVersion() >= 2) {
       attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
-    } else if (format.profile() == CoreProfile){
+    } else if (format.profile() == QGLFormat::CoreProfile){
       attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
     } else {
       attribs[cnt++] = NSOpenGLProfileVersionLegacy;
