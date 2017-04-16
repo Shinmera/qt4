@@ -275,6 +275,14 @@ bool QGLContext::chooseContext(const QGLContext *shareContext)
     d->glFormat.setSampleBuffers(sampleBuffers);
     if (sampleBuffers > 0)
         d->glFormat.setSamples(attribValue(fmt, NSOpenGLPFASamples));
+
+    int profileVersion = attribValue(fmt, NSOpenGLPFAOpenGLProfile);
+    if (profileVersion == NSOpenGLProfileVersion3_2Core
+        || profileVersion == NSOpenGLProfileVersion4_1Core)
+      d->glFormat.setProfile(QGLFormat::CoreProfile);
+    else if (profileVersion == NSOpenGLProfileVersionLegacy)
+      d->glFormat.setProfile(QGLFormat::CompatibilityProfile);
+    
 #endif
     if (shareContext && (!shareContext->isValid() || !shareContext->d_func()->cx)) {
         qWarning("QGLContext::chooseContext: Cannot share with invalid context");
@@ -426,6 +434,20 @@ void *QGLContextPrivate::tryFormat(const QGLFormat &format)
     int devType = paintDevice->devType();
     bool device_is_pixmap = (devType == QInternal::Pixmap);
     int depth = device_is_pixmap ? static_cast<QPixmap *>(paintDevice)->depth() : 32;
+    
+    if (format.profile() != QGLFormat::NoProfile) {
+      if (format.majorVersion() >= 4) {
+        attribs[cnt++] = NSOpenGLPFAOpenGLProfile;
+        attribs[cnt++] = NSOpenGLProfileVersion4_1Core;
+      } else if (format.majorVersion() >= 3 && format.minorVersion() >= 2
+                 || format.profile() == QGLFormat::CoreProfile) {
+        attribs[cnt++] = NSOpenGLPFAOpenGLProfile;
+        attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
+      } else if (format.profile() == QGLFormat::CompatibilityProfile) {
+        attribs[cnt++] = NSOpenGLPFAOpenGLProfile;
+        attribs[cnt++] = NSOpenGLProfileVersionLegacy;
+      }
+    }
 
     attribs[cnt++] = NSOpenGLPFAColorSize;
     attribs[cnt++] = depth;
@@ -462,19 +484,6 @@ void *QGLContextPrivate::tryFormat(const QGLFormat &format)
     }
     if (devType == QInternal::Pbuffer)
         attribs[cnt++] = NSOpenGLPFAPixelBuffer;
-    
-    // QT-LIBS FIX: Select proper context
-    attribs[cnt++] = NSOpenGLPFAOpenGLProfile;
-    if (format.majorVersion() >= 4) {
-      attribs[cnt++] = NSOpenGLProfileVersion4_1Core;
-    } else if (format.majorVersion() >= 3 && format.minorVersion() >= 2) {
-      attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
-    } else if (format.profile() == QGLFormat::CoreProfile){
-      attribs[cnt++] = NSOpenGLProfileVersion3_2Core;
-    } else {
-      attribs[cnt++] = NSOpenGLProfileVersionLegacy;
-    }
-    // QT-LIBS FIX
 
     attribs[cnt] = 0;
     Q_ASSERT(cnt < Max);
