@@ -1848,8 +1848,6 @@ void QTextControlPrivate::contextMenuEvent(const QPoint &screenPos, const QPoint
     Q_UNUSED(contextWidget);
 #else
     Q_Q(QTextControl);
-    if (!hasFocus)
-        return;
     QMenu *menu = q->createStandardContextMenu(docPos, contextWidget);
     if (!menu)
         return;
